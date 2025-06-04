@@ -8,52 +8,68 @@ TEMPLATE_HTML = """
     <meta charset="UTF-8">
     <title>Achadinhos do Dia 🛍️</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {{
-            font-family: Arial, sans-serif;
-            background-color: #fafafa;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #f3e5f5, #ede7f6);
             margin: 0;
-            padding: 20px;
-            text-align: center;
+            padding: 30px 20px;
         }}
         h1 {{
             color: #6a1b9a;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 32px;
         }}
         .grid {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
         }}
         .produto {{
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            width: 260px;
-            padding: 10px;
-            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }}
+        .produto:hover {{
+            transform: translateY(-5px);
         }}
         .produto img {{
             width: 100%;
-            height: auto;
-            border-radius: 6px;
+            height: 240px;
+            object-fit: cover;
         }}
         .produto h3 {{
             font-size: 16px;
             color: #333;
+            padding: 15px 12px 5px;
+            height: 48px;
+            overflow: hidden;
         }}
         .produto p {{
-            font-size: 14px;
-            color: #777;
+            font-size: 15px;
+            color: #6a1b9a;
+            font-weight: bold;
+            padding: 0 12px;
         }}
         .produto a {{
-            background: #8e24aa;
+            display: block;
+            margin: 12px;
+            padding: 10px;
+            background-color: #8e24aa;
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
             text-decoration: none;
-            display: inline-block;
-            margin-top: 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }}
+        .produto a:hover {{
+            background-color: #6a1b9a;
         }}
     </style>
 </head>
@@ -65,6 +81,7 @@ TEMPLATE_HTML = """
 </body>
 </html>
 """
+
 
 def gerar_card(produto):
     return f"""
