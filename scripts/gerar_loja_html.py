@@ -76,7 +76,7 @@ def gerar_card(produto):
     </div>
     """
 
-def gerar_loja_html(csv_path, output_path="static/loja.html", limite=30):
+def gerar_loja_html(csv_path, output_path="static/index.html", limite=30):
     df = pd.read_csv(csv_path)
     produtos = "\n".join([gerar_card(row) for _, row in df.head(limite).iterrows()])
     html = TEMPLATE_HTML.format(produtos=produtos)
