@@ -1,5 +1,16 @@
 import os
 import subprocess
+
+print("\n🚀 Iniciando pipeline...")
+# Etapa 2.5: Publicação no Instagram
+try:
+    print("📸 Publicando produto no Instagram...")
+    subprocess.run(["python", "scripts/instagram.py"], check=True)
+except subprocess.CalledProcessError as e:
+    print("❌ Erro ao publicar no Instagram:", e)
+    exit(1)
+
+# Etapa 3: Geração da loja HTML
 try:
     print("🛍️ Gerando loja HTML...")
     subprocess.run(["python", "scripts/gerar_loja_html.py"], check=True)
