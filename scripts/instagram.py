@@ -20,47 +20,73 @@ def gerar_legenda(prod):
 👉 Confira no link da bio!
 #achadinhos #promo #shopee #ofertas"""
 
-# Lê produtos do CSV
-df = pd.read_csv("data/ofertas_shopee.csv")
+# Lê produtos do CSV (limita a 30)
+df = pd.read_csv("data/ofertas_shopee.csv").head(30)
 
-print(f"📸 Iniciando postagem de {len(df)} produtos no Instagram...")
+print(f"📸 Iniciando postagem de {len(df)} produtos no Instagram (feed + stories)...")
 
 for i, produto in df.iterrows():
     legenda = gerar_legenda(produto)
 
-    # Etapa 1: Cria o container de mídia
+    # ===== FEED =====
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
-    payload_container = {
+    payload_feed = {
         "image_url": produto["imageUrl"],
         "caption": legenda,
         "access_token": ACCESS_TOKEN
     }
 
-    res_container = requests.post(container_url, data=payload_container)
-    data_container = res_container.json()
+    res_feed = requests.post(container_url, data=payload_feed)
+    data_feed = res_feed.json()
 
-    if "id" not in data_container:
-        print(f"❌ [{i+1}] Erro ao criar container:", data_container)
+    if "id" not in data_feed:
+        print(f"❌ [{i+1}] Erro ao criar container do feed:", data_feed)
         continue
 
-    creation_id = data_container["id"]
-    time.sleep(3)  # Espera o container ser processado
+    creation_id_feed = data_feed["id"]
+    time.sleep(3)
 
-    # Etapa 2: Publica o post
     publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media_publish"
-    payload_publish = {
-        "creation_id": creation_id,
+    res_publish_feed = requests.post(publish_url, data={
+        "creation_id": creation_id_feed,
+        "access_token": ACCESS_TOKEN
+    })
+    result_feed = res_publish_feed.json()
+
+    if "id" in result_feed:
+        print(f"✅ [{i+1}/30] Feed publicado com ID: {result_feed['id']}")
+    else:
+        print(f"❌ [{i+1}/30] Erro no feed:", result_feed)
+
+    # ===== STORIES =====
+    story_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
+    payload_story = {
+        "image_url": produto["imageUrl"],
+        "is_stories": "true",
         "access_token": ACCESS_TOKEN
     }
 
-    res_publish = requests.post(publish_url, data=payload_publish)
-    data_publish = res_publish.json()
+    res_story = requests.post(story_url, data=payload_story)
+    data_story = res_story.json()
 
-    if "id" in data_publish:
-        print(f"✅ [{i+1}/{len(df)}] Produto publicado com ID: {data_publish['id']}")
+    if "id" not in data_story:
+        print(f"⚠️ [{i+1}/30] Erro ao criar container do story:", data_story)
+        continue
+
+    creation_id_story = data_story["id"]
+    time.sleep(3)
+
+    res_publish_story = requests.post(publish_url, data={
+        "creation_id": creation_id_story,
+        "access_token": ACCESS_TOKEN
+    })
+    result_story = res_publish_story.json()
+
+    if "id" in result_story:
+        print(f"✅ [{i+1}/30] Story publicado com ID: {result_story['id']}")
     else:
-        print(f"❌ [{i+1}/{len(df)}] Erro ao publicar:", data_publish)
+        print(f"⚠️ [{i+1}/30] Erro ao publicar story:", result_story)
 
-    time.sleep(5)  # Delay entre publicações
+    time.sleep(5)
 
-print("🏁 Finalizado!")
+print("🏁 Publicação concluída com sucesso!")
