@@ -59,14 +59,14 @@ for i, produto in df.iterrows():
         print(f"❌ [{i+1}/30] Erro no feed:", result_feed)
 
     # ===== STORIES =====
-    story_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
     payload_story = {
         "image_url": produto["imageUrl"],
         "is_stories": "true",
+        "media_type": "IMAGE",  # Essencial para não cair no Feed!
         "access_token": ACCESS_TOKEN
     }
 
-    res_story = requests.post(story_url, data=payload_story)
+    res_story = requests.post(container_url, data=payload_story)
     data_story = res_story.json()
 
     if "id" not in data_story:
