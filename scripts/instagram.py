@@ -9,7 +9,7 @@ load_dotenv()
 INSTAGRAM_ID = os.getenv("INSTAGRAM_ID")
 ACCESS_TOKEN = os.getenv("PAGE_TOKEN")
 
-# Gera legenda com chamada para link da bio
+# Gera legenda para o feed
 def gerar_legenda(prod):
     return f"""🛍️ {prod["productName"]}
 
@@ -20,18 +20,20 @@ def gerar_legenda(prod):
 👉 Confira no link da bio!
 #achadinhos #promo #shopee #ofertas"""
 
-# Lê produtos do CSV (limita a 30)
+# Lê CSV e limita a 30 produtos
 df = pd.read_csv("data/ofertas_shopee.csv").head(30)
 
 print(f"📸 Iniciando postagem de {len(df)} produtos no Instagram (feed + stories)...")
 
 for i, produto in df.iterrows():
     legenda = gerar_legenda(produto)
+    image_url = produto["imageUrl"]
+    link_afiliado = produto["offerLink"]
 
-    # ===== FEED =====
+    # ========== FEED ==========
     feed_container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
     payload_feed = {
-        "image_url": produto["imageUrl"],
+        "image_url": image_url,
         "caption": legenda,
         "access_token": ACCESS_TOKEN
     }
@@ -58,12 +60,14 @@ for i, produto in df.iterrows():
     else:
         print(f"❌ [{i+1}/30] Erro ao publicar no feed:", result_feed)
 
-    # ===== STORIES =====
+    # ========== STORIES ==========
+    # Adiciona link direto como sticker
     story_container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
     payload_story = {
-        "image_url": produto["imageUrl"],
-        "media_type": "STORIES",  # ESSENCIAL: Define que será um story
-        "access_token": ACCESS_TOKEN
+        "image_url": image_url,
+        "media_type": "STORIES",
+        "access_token": ACCESS_TOKEN,
+        "link_sticker": f'[{{"url":"{link_afiliado}"}}]'  # IMPORTANTE: precisa ser string JSON
     }
 
     res_story = requests.post(story_container_url, data=payload_story)
