@@ -2,12 +2,16 @@ import pandas as pd
 import requests
 import os
 import time
+import json
 from dotenv import load_dotenv
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
 
 # Carrega variáveis de ambiente
 load_dotenv()
 INSTAGRAM_ID = os.getenv("INSTAGRAM_ID")
 ACCESS_TOKEN = os.getenv("PAGE_TOKEN")
+IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 
 # Gera legenda para o feed
 def gerar_legenda(prod):
@@ -19,6 +23,45 @@ def gerar_legenda(prod):
 
 👉 Confira no link da bio!
 #achadinhos #promo #shopee #ofertas"""
+
+# Cria imagem vertical com fundo roxo e info do produto
+def gerar_imagem_vertical(prod):
+    largura, altura = 1080, 1920
+    imagem = Image.new("RGB", (largura, altura), (128, 0, 128))  # Fundo roxo
+    draw = ImageDraw.Draw(imagem)
+
+    try:
+        fonte_titulo = ImageFont.truetype("arialbd.ttf", 60)
+        fonte_info = ImageFont.truetype("arial.ttf", 50)
+    except:
+        fonte_titulo = fonte_info = ImageFont.load_default()
+
+    # Baixa imagem do produto
+    response = requests.get(prod["imageUrl"])
+    img_prod = Image.open(BytesIO(response.content)).resize((800, 800))
+
+    # Coloca imagem centralizada
+    imagem.paste(img_prod, (140, 250))
+
+    # Texto superior
+    draw.text((100, 1100), prod["productName"][:40], fill="white", font=fonte_titulo)
+    draw.text((100, 1200), f'R$ {prod["price"]} - {prod["shopName"]}', fill="white", font=fonte_info)
+
+    # Salva temporariamente
+    caminho = f"tmp/story_{prod['productName'][:10]}.jpg"
+    os.makedirs("tmp", exist_ok=True)
+    imagem.save(caminho)
+    return caminho
+
+# Envia imagem para Imgbb e retorna link
+def upload_para_imgbb(caminho):
+    with open(caminho, "rb") as file:
+        res = requests.post(
+            "https://api.imgbb.com/1/upload",
+            params={"key": IMGBB_API_KEY},
+            files={"image": file}
+        )
+    return res.json()["data"]["url"]
 
 # Lê CSV e limita a 30 produtos
 df = pd.read_csv("data/ofertas_shopee.csv").head(30)
@@ -61,16 +104,24 @@ for i, produto in df.iterrows():
         print(f"❌ [{i+1}/30] Erro ao publicar no feed:", result_feed)
 
     # ========== STORIES ==========
-    # Adiciona link direto como sticker
-    story_container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media"
+    caminho_img = gerar_imagem_vertical(produto)
+    url_imgbb = upload_para_imgbb(caminho_img)
+
     payload_story = {
-        "image_url": image_url,
+        "image_url": url_imgbb,
         "media_type": "STORIES",
         "access_token": ACCESS_TOKEN,
-        "link_sticker": f'[{{"url":"{link_afiliado}"}}]'  # IMPORTANTE: precisa ser string JSON
+        "link_sticker": json.dumps([
+            {
+                "url": link_afiliado,
+                "type": "standard",
+                "position": {"x": 0.5, "y": 0.85},
+                "size": {"width": 0.4, "height": 0.1}
+            }
+        ])
     }
 
-    res_story = requests.post(story_container_url, data=payload_story)
+    res_story = requests.post(feed_container_url, data=payload_story)
     data_story = res_story.json()
 
     if "id" not in data_story:
